@@ -122,6 +122,7 @@ main_menu() {
     echo -e " 1. ${YELLOW}系统信息查询${NC}"
     echo -e " 2. ${YELLOW}系统更新${NC}"
     echo -e " 3. ${YELLOW}系统清理${NC}"
+    echo -e ""
     echo -e " 8. ${CYAN}📝 查看更新日志${NC}"
     echo -e " 9. ${RED}退出${NC}"
     echo -e "${BLUE}=========================================${NC}"
