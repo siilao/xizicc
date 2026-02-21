@@ -23,43 +23,43 @@ URL_CHANGELOG="https://raw.githubusercontent.com/siilao/xizicc/main/modules/chan
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
 # 一键验证地址（启动时自动检查，告诉你哪个地址有问题）
-verify_urls() {
-    show_title
-    echo -e "${GREEN}=========================================${NC}"
-    echo -e "${CYAN}               地址验证                  ${NC}"
-    echo -e "${GREEN}=========================================${NC}\n"
-
-    local urls=(
-        "系统信息模块:${URL_SYS_INFO}"
-        "系统更新模块:${URL_SYS_UPDATE}"
-        "系统清理模块:${URL_SYS_CLEAN}"
-        "更新日志文件:${URL_CHANGELOG}"
-    )
-
-    local all_ok=1
-    for url in "${urls[@]}"; do
-        name=${url%%:*}
-        link=${url#*:}
-        
-        echo -e "${BLUE}检测 ${name}：${link}${NC}"
-        # 测试地址是否能访问且有内容
-        content=$(curl -s --connect-timeout 5 "$link")
-        if [ -n "$content" ]; then
-            echo -e "${GREEN}✅ ${name} 地址有效${NC}"
-        else
-            echo -e "${RED}❌ ${name} 地址无效/无内容${NC}"
-            all_ok=0
-        fi
-        echo "----------------------------------------"
-    done
-
-    if [ $all_ok -eq 1 ]; then
-        echo -e "${GREEN}✅ 所有地址验证通过！${NC}"
-    else
-        echo -e "${RED}❌ 部分地址无效，请检查URL！${NC}"
-    fi
-    sleep 2
-}
+#verify_urls() {
+#    show_title
+#    echo -e "${GREEN}=========================================${NC}"
+#    echo -e "${CYAN}               地址验证                  ${NC}"
+#    echo -e "${GREEN}=========================================${NC}\n"
+#
+#    local urls=(
+#        "系统信息模块:${URL_SYS_INFO}"
+#        "系统更新模块:${URL_SYS_UPDATE}"
+#        "系统清理模块:${URL_SYS_CLEAN}"
+#        "更新日志文件:${URL_CHANGELOG}"
+#    )
+#
+#    local all_ok=1
+#    for url in "${urls[@]}"; do
+#        name=${url%%:*}
+#        link=${url#*:}
+#
+#        echo -e "${BLUE}检测 ${name}：${link}${NC}"
+#        # 测试地址是否能访问且有内容
+#        content=$(curl -s --connect-timeout 5 "$link")
+#        if [ -n "$content" ]; then
+#            echo -e "${GREEN}✅ ${name} 地址有效${NC}"
+#        else
+#            echo -e "${RED}❌ ${name} 地址无效/无内容${NC}"
+#            all_ok=0
+#        fi
+#        echo "----------------------------------------"
+#    done
+#
+#    if [ $all_ok -eq 1 ]; then
+#        echo -e "${GREEN}✅ 所有地址验证通过！${NC}"
+#    else
+#        echo -e "${RED}❌ 部分地址无效，请检查URL！${NC}"
+#    fi
+#    sleep 2
+#}
 
 show_title() {
     clear
@@ -118,7 +118,7 @@ main_menu() {
     show_title
 
     echo -e "${GREEN}【主菜单】${NC}"
-    echo -e " 0. ${CYAN}🔍 验证所有地址${NC}"
+#    echo -e " 0. ${CYAN}🔍 验证所有地址${NC}"
     echo -e " 1. ${YELLOW}系统信息查询${NC}"
     echo -e " 2. ${YELLOW}系统更新${NC}"
     echo -e " 3. ${YELLOW}系统清理${NC}"
@@ -128,7 +128,7 @@ main_menu() {
     read -p "请输入选项：" choice
 
     case $choice in
-        0) verify_urls; main_menu ;;  # 一键验证地址
+#        0) verify_urls; main_menu ;;  # 一键验证地址
         1) run_module "$URL_SYS_INFO" "系统信息查询" ;;
         2) run_module "$URL_SYS_UPDATE" "系统更新" ;;
         3) run_module "$URL_SYS_CLEAN" "系统清理" ;;
@@ -143,5 +143,5 @@ main_menu() {
 }
 
 # 启动时先验证地址，再进主菜单
-verify_urls
+#verify_urls
 main_menu
