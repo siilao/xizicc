@@ -14,6 +14,8 @@ NC='\033[0m'
 # 路径
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 MODULE_DIR="${SCRIPT_DIR}/modules"
+# 独立日志文件路径
+CHANGELOG_FILE="${MODULE_DIR}/changelog.txt"
 
 # 替换成你的GitHub仓库地址
 GIT_REPO_URL="https://github.com/siilao/xizicc.git"
@@ -28,9 +30,45 @@ show_title() {
 }
 
 check_dir() {
+    # 只创建模块目录，不自动创建日志文件
     if [ ! -d "${MODULE_DIR}" ]; then
         mkdir -p "${MODULE_DIR}"
+        echo -e "${GREEN}已创建模块目录：${MODULE_DIR}${NC}"
+        sleep 1
     fi
+}
+
+# 查看独立日志文件
+show_changelog() {
+    show_title
+    echo -e "${GREEN}=========================================${NC}"
+    echo -e "${CYAN}               更新日志                  ${NC}"
+    echo -e "${GREEN}=========================================${NC}\n"
+
+    # 检查日志文件是否存在
+    if [ ! -f "${CHANGELOG_FILE}" ]; then
+        echo -e "${RED}❌ 更新日志文件不存在！${NC}"
+        echo -e "${YELLOW}日志文件路径：${CHANGELOG_FILE}${NC}"
+        echo -e "${CYAN}请手动创建日志文件后重试。${NC}"
+    else
+        # 按格式高亮展示日志
+        while IFS= read -r line; do
+            if [[ "$line" =~ ^脚本更新日志 ]]; then
+                echo -e "${BLUE}${line}${NC}"
+            elif [[ "$line" =~ ^2026- ]]; then
+                echo -e "${PURPLE}${line}${NC}"
+            elif [[ "$line" =~ ^------------------------ ]]; then
+                echo -e "${GREEN}${line}${NC}"
+            else
+                echo -e "${YELLOW}${line}${NC}"
+            fi
+        done < "${CHANGELOG_FILE}"
+    fi
+
+    echo -e "\n${GREEN}=========================================${NC}"
+    echo -e "\n${CYAN}按任意键返回主菜单...${NC}"
+    read -n 1 -s
+    main_menu
 }
 
 # 整包更新（git pull）
@@ -85,10 +123,14 @@ main_menu() {
         1) bash "${MODULE_DIR}/sys_info.sh" ;;
         2) bash "${MODULE_DIR}/sys_update.sh" ;;
         3) bash "${MODULE_DIR}/sys_clean.sh" ;;
-        8) bash "${MODULE_DIR}/changelog.md" ;;
+        8) show_changelog ;;
         9) update_full_git ;;
-        0) echo -e "${CYAN}再见！${NC}"; exit 0 ;;
-        *) echo -e "${RED}输入错误${NC}"; sleep 1 ;;
+        0) echo -e "${CYAN}感谢使用戏子一键工具箱，再见！${NC}"; exit 0 ;;
+        *)
+            echo -e "${RED}❌ 输入错误！请输入 0-3、8 或 9${NC}"
+            sleep 1
+            main_menu  # 输入错误后清屏返回菜单
+            ;;
     esac
     main_menu
 }
