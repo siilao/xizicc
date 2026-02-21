@@ -1,5 +1,4 @@
 #!/bin/bash
-# Xizicc 一键工具箱
 VERSION="1.0.2"
 
 # 颜色
@@ -11,7 +10,6 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-# ========== 唯一地址定义区（只改这里！）==========
 # 所有模块地址只在这定义，调用时直接用，杜绝不匹配
 URL_SYS_INFO="https://raw.githubusercontent.com/siilao/xizicc/main/modules/sys_info.sh"
 URL_SYS_UPDATE="https://raw.githubusercontent.com/siilao/xizicc/main/modules/sys_update.sh"
@@ -157,19 +155,17 @@ show_changelog() {
 main_menu() {
     show_title
 
-    echo -e "${GREEN}【主菜单】${NC}"
-#    echo -e " 0. ${CYAN}🔍 验证所有地址${NC}"
+    echo -e "${BLUE}=========================================${NC}"
     echo -e " 1. ${YELLOW}系统信息查询${NC}"
     echo -e " 2. ${YELLOW}系统更新${NC}"
     echo -e " 3. ${YELLOW}系统清理${NC}"
-    echo -e ""
+    echo -e "${BLUE}=========================================${NC}"
     echo -e " 8. ${CYAN}📝 查看更新日志${NC}"
-    echo -e " 9. ${RED}退出${NC}"
+    echo -e " 9. ${RED}退出脚本${NC}"
     echo -e "${BLUE}=========================================${NC}"
     read -p "请输入选项：" choice
 
     case $choice in
-#        0) verify_urls; main_menu ;;  # 一键验证地址
         1) run_module "$URL_SYS_INFO" "系统信息查询" ;;
         2) run_module "$URL_SYS_UPDATE" "系统更新" ;;
         3) run_module "$URL_SYS_CLEAN" "系统清理" ;;
