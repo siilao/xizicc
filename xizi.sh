@@ -75,6 +75,7 @@ main_menu() {
     echo -e " 2. ${YELLOW}系统更新${NC}"
     echo -e " 3. ${YELLOW}系统清理${NC}"
     echo -e ""
+    echo -e " 8. ${CYAN}📝 查看更新日志${NC}"
     echo -e " 9. ${CYAN}🔄 脚本更新（Git 拉取）${NC}"
     echo -e " 0. ${RED}退出${NC}"
     echo -e "${BLUE}=========================================${NC}"
@@ -84,13 +85,11 @@ main_menu() {
         1) bash "${MODULE_DIR}/sys_info.sh" ;;
         2) bash "${MODULE_DIR}/sys_update.sh" ;;
         3) bash "${MODULE_DIR}/sys_clean.sh" ;;
+        8) bash "${MODULE_DIR}/changelog.md" ;;
         9) update_full_git ;;
         0) echo -e "${CYAN}再见！${NC}"; exit 0 ;;
         *) echo -e "${RED}输入错误${NC}"; sleep 1 ;;
     esac
-
-    echo -e "\n按回车返回菜单"
-    read -r
     main_menu
 }
 
