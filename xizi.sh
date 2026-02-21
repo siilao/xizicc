@@ -1,6 +1,6 @@
 #!/bin/bash
 # Xizicc 一键工具箱
-VERSION="1.0.0"
+VERSION="1.0.1"
 
 # 颜色
 RED='\033[0;31m'
@@ -21,9 +21,9 @@ GIT_REPO_URL="https://github.com/siilao/xizicc.git"
 show_title() {
     clear
     echo -e "${BLUE}=========================================${NC}"
-    echo -e "${PURPLE}           Xizicc 一键工具箱  v${VERSION}        ${NC}"
+    echo -e "${PURPLE}戏子一键工具箱  v${VERSION} 只为更简单的Linux的使用！${NC}"
     echo -e "${BLUE}=========================================${NC}"
-    echo -e "${YELLOW}        模块化结构 · 整包 Git 更新         ${NC}"
+    echo -e "${YELLOW}适配Ubuntu/Debian/CentOS/Alpine/Kali/Arch/RedHat/Fedora/Alma/Rocky系统${NC}"
     echo -e ""
 }
 
@@ -35,7 +35,7 @@ check_dir() {
 
 # 整包更新（git pull）
 update_full_git() {
-    echo -e "${GREEN}【整包更新】正在拉取最新代码...${NC}"
+    echo -e "${GREEN}【脚本更新】正在拉取最新代码...${NC}"
 
     # 先检查有没有安装 git
     if ! command -v git &> /dev/null; then
@@ -57,7 +57,7 @@ update_full_git() {
     git pull origin main
 
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✅ 整包更新完成！包含主脚本 + modules 全部文件！${NC}"
+        echo -e "${GREEN}✅ 脚本更新完成！包含主脚本 + modules 全部文件！${NC}"
     else
         echo -e "${RED}❌ 更新失败${NC}"
     fi
@@ -75,7 +75,7 @@ main_menu() {
     echo -e " 2. ${YELLOW}系统更新${NC}"
     echo -e " 3. ${YELLOW}系统清理${NC}"
     echo -e ""
-    echo -e " 9. ${CYAN}🔄 整包更新（Git 拉取）${NC}"
+    echo -e " 9. ${CYAN}🔄 脚本更新（Git 拉取）${NC}"
     echo -e " 0. ${RED}退出${NC}"
     echo -e "${BLUE}=========================================${NC}"
     read -p "请输入选项：" choice
