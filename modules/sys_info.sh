@@ -1,4 +1,6 @@
 #!/bin/bash
+# 科技lion风格 - 系统信息查询独立脚本
+# 适配：Ubuntu/Debian/CentOS/Alpine/Kali/Arch/RedHat/Fedora/Alma/Rocky
 
 # 颜色定义
 RED='\033[0;31m'
@@ -12,7 +14,7 @@ NC='\033[0m' # 重置颜色
 # 清理屏幕并显示标题
 clear
 echo -e "${BLUE}=============================================${NC}"
-echo -e "${PURPLE}            系统信息查询                   ${NC}"
+echo -e "${PURPLE}            系统信息查询 - 科技lion风格            ${NC}"
 echo -e "${BLUE}=============================================${NC}\n"
 
 # ========== 1. 基础系统信息 ==========
@@ -140,3 +142,5 @@ echo -e "${YELLOW}防火墙状态：${NC}$FIREWALL"
 echo -e "\n${BLUE}=============================================${NC}"
 echo -e "${GREEN}✅ 系统信息查询完成！${NC}"
 echo -e "${BLUE}=============================================${NC}"
+echo -e "\n${CYAN}按任意键返回主菜单...${NC}"
+read -n 1 -s
