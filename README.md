@@ -8,7 +8,7 @@
 
 ### 戏子一键脚本工具 的支持列表：
 
-> Debian Ubuntu Cent OS
+> 适配Ubuntu/Debian/CentOS/Alpine/Kali/Arch/RedHat/Fedora/Alma/Rocky系统
 
 ------
 
