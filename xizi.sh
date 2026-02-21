@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="1.0.2"
+VERSION="1.0.3"
 
 # 颜色
 RED='\033[0;31m'
@@ -15,6 +15,7 @@ URL_SYS_INFO="https://raw.githubusercontent.com/siilao/xizicc/main/modules/sys_i
 URL_SYS_UPDATE="https://raw.githubusercontent.com/siilao/xizicc/main/modules/sys_update.sh"
 URL_SYS_CLEAN="https://raw.githubusercontent.com/siilao/xizicc/main/modules/sys_clean.sh"
 URL_CHANGELOG="https://raw.githubusercontent.com/siilao/xizicc/main/modules/changelog.txt"
+URL_BASE_TOOLS="https://raw.githubusercontent.com/siilao/xizicc/main/modules/base_tools.sh"
 # 仅保留脚本地址（无需version.txt）
 URL_LATEST_SCRIPT="https://raw.githubusercontent.com/siilao/xizicc/main/xizi.sh"
 # ==============================================
@@ -159,8 +160,9 @@ main_menu() {
     echo -e " 1. ${YELLOW}系统信息查询${NC}"
     echo -e " 2. ${YELLOW}系统更新${NC}"
     echo -e " 3. ${YELLOW}系统清理${NC}"
+    echo -e " 4. ${YELLOW}基础工具${NC}"
     echo -e "${BLUE}=========================================${NC}"
-    echo -e " 8. ${CYAN}📝 查看更新日志${NC}"
+    echo -e " 8. ${CYAN}查看更新日志${NC}"
     echo -e " 9. ${RED}退出脚本${NC}"
     echo -e "${BLUE}=========================================${NC}"
     read -p "请输入选项：" choice
@@ -169,6 +171,7 @@ main_menu() {
         1) run_module "$URL_SYS_INFO" "系统信息查询" ;;
         2) run_module "$URL_SYS_UPDATE" "系统更新" ;;
         3) run_module "$URL_SYS_CLEAN" "系统清理" ;;
+        4) run_module "$URL_BASE_TOOLS" "基础工具" ;;
         8) show_changelog ;;
         9) echo -e "${CYAN}再见！${NC}"; exit 0 ;;
         *)
