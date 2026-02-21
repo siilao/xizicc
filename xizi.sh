@@ -21,48 +21,35 @@ URL_CHANGELOG="https://raw.githubusercontent.com/siilao/xizicc/main/modules/chan
 
 # 脚本路径（获取xizi.sh的绝对路径，关键！）
 SCRIPT_PATH=$(readlink -f "$0")
-SCRIPT_DIR=$(dirname "${SCRIPT_PATH}")
 # 全局快捷键目标路径
 SHORTCUT_PATH="/usr/local/bin/x"
 
-# 一键验证地址（启动时自动检查，告诉你哪个地址有问题）
-#verify_urls() {
-#    show_title
-#    echo -e "${GREEN}=========================================${NC}"
-#    echo -e "${CYAN}               地址验证                  ${NC}"
-#    echo -e "${GREEN}=========================================${NC}\n"
-#
-#    local urls=(
-#        "系统信息模块:${URL_SYS_INFO}"
-#        "系统更新模块:${URL_SYS_UPDATE}"
-#        "系统清理模块:${URL_SYS_CLEAN}"
-#        "更新日志文件:${URL_CHANGELOG}"
-#    )
-#
-#    local all_ok=1
-#    for url in "${urls[@]}"; do
-#        name=${url%%:*}
-#        link=${url#*:}
-#
-#        echo -e "${BLUE}检测 ${name}：${link}${NC}"
-#        # 测试地址是否能访问且有内容
-#        content=$(curl -s --connect-timeout 5 "$link")
-#        if [ -n "$content" ]; then
-#            echo -e "${GREEN}✅ ${name} 地址有效${NC}"
-#        else
-#            echo -e "${RED}❌ ${name} 地址无效/无内容${NC}"
-#            all_ok=0
-#        fi
-#        echo "----------------------------------------"
-#    done
-#
-#    if [ $all_ok -eq 1 ]; then
-#        echo -e "${GREEN}✅ 所有地址验证通过！${NC}"
-#    else
-#        echo -e "${RED}❌ 部分地址无效，请检查URL！${NC}"
-#    fi
-#    sleep 2
-#}
+# 核心：首次运行自动配置快捷键（无交互）
+auto_setup_shortcut() {
+    # 检查是否已有快捷键
+    if [ -L "${SHORTCUT_PATH}" ]; then
+        existing_link=$(readlink "${SHORTCUT_PATH}")
+        # 已有正确的快捷键，直接返回
+        if [ "${existing_link}" = "${SCRIPT_PATH}" ]; then
+            return 0
+        fi
+        # 已有错误的快捷键，自动覆盖（无需确认）
+        echo -e "${YELLOW}⚠️  检测到快捷键 x 指向错误，自动更新...${NC}"
+        sudo rm -f "${SHORTCUT_PATH}"
+    fi
+
+    # 全新配置/覆盖配置快捷键
+    echo -e "${BLUE}📦 正在配置全局快捷键 x...${NC}"
+    if sudo ln -s "${SCRIPT_PATH}" "${SHORTCUT_PATH}" && sudo chmod +x "${SHORTCUT_PATH}"; then
+        echo -e "${GREEN}✅ 全局快捷键 x 配置成功！${NC}"
+        echo -e "${YELLOW}任意目录输入 x 即可运行本脚本${NC}\n"
+    else
+        echo -e "${RED}❌ 快捷键自动配置失败，请手动执行以下命令：${NC}"
+        echo -e "sudo ln -s ${SCRIPT_PATH} ${SHORTCUT_PATH}"
+        echo -e "sudo chmod +x ${SHORTCUT_PATH}\n"
+    fi
+    sleep 2
+}
 
 show_title() {
     clear
@@ -146,6 +133,8 @@ main_menu() {
     esac
 }
 
-# 启动时先验证地址，再进主菜单
-#verify_urls
+# ========== 脚本启动入口 ==========
+# 第一步：自动配置快捷键（首次运行触发，后续跳过）
+auto_setup_shortcut
+# 第二步：进入主菜单
 main_menu
