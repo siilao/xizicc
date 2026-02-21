@@ -16,7 +16,7 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 MODULE_DIR="${SCRIPT_DIR}/modules"
 
 # 替换成你的GitHub仓库地址
-GIT_REPO_URL="https://github.com/你的用户名/xizicc.git"
+GIT_REPO_URL="https://github.com/siilao/xizicc.git"
 
 show_title() {
     clear
