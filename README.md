@@ -25,5 +25,5 @@ or
 GitHub版一键脚本 部分小伙伴会遇到官网版出现大段乱码！就用GitHub版本吧！
 
 ```
-apt install -y git && git clone https://github.com/siilao/xizicc.git && cd xizicc && chmod +x xizi.sh && ./xizi.sh
+curl -sS -O https://raw.githubusercontent.com/siilao/xizicc/main/xizi.sh && chmod +x xizi.sh && ./xizi.sh
 ```
