@@ -1,5 +1,4 @@
 #!/bin/bash
-# 适配：Ubuntu/Debian/CentOS/Alpine/Kali/Arch/RedHat/Fedora/Alma/Rocky
 
 # 颜色定义
 RED='\033[0;31m'
@@ -8,140 +7,167 @@ YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
-NC='\033[0m' # 重置颜色
+窗='\033[0m'
 
-# 清理屏幕并显示标题
-clear
-echo -e "${BLUE}=============================================${NC}"
-echo -e "${PURPLE}            系统信息查询                     ${NC}"
-echo -e "${BLUE}=============================================${NC}\n"
+# ========== 补充原版依赖函数 ==========
+# 1. 采集IP和流量信息（原版ip_address函数核心逻辑）
+ip_address() {
+    # 获取公网IPv4
+    ipv4_address=$(curl -s --max-time 5 ip.sb -4 || curl -s --max-time 5 ifconfig.me -4 || echo "未获取到")
+    # 获取公网IPv6
+    ipv6_address=$(curl -s --max-time 5 ip.sb -6 || curl -s --max-time 5 ifconfig.me -6 || echo "未获取到/未开启")
+    
+    # 采集网卡总收发流量（原版rx/tx变量）
+    if command -v ip &>/dev/null; then
+        # 取第一个非lo的网卡
+        main_nic=$(ip link show | grep -E '^[0-9]' | grep -v LOOPBACK | head -n1 | awk '{print $2}' | sed 's/://')
+        if [ -n "$main_nic" ]; then
+            # 读取流量（字节转MB）
+            rx=$(cat /sys/class/net/$main_nic/statistics/rx_bytes | awk '{printf "%.2f MB", $1/1024/1024}')
+            tx=$(cat /sys/class/net/$main_nic/statistics/tx_bytes | awk '{printf "%.2f MB", $1/1024/1024}')
+        else
+            rx="未获取到"
+            tx="未获取到"
+        fi
+    else
+        rx="未获取到"
+        tx="未获取到"
+    fi
+}
 
-# ========== 1. 基础系统信息 ==========
-echo -e "${GREEN}【1. 基础系统信息】${NC}"
-echo -e "---------------------------------------------"
+# 2. 获取当前时区（原版current_timezone函数）
+current_timezone() {
+    if command -v timedatectl &>/dev/null; then
+        timedatectl show -p Timezone --value 2>/dev/null
+    else
+        date +%Z
+    fi
+}
 
-# 系统发行版
-if [ -f /etc/os-release ]; then
-    . /etc/os-release
-    OS_NAME="$NAME $VERSION"
-elif [ -f /etc/redhat-release ]; then
-    OS_NAME=$(cat /etc/redhat-release)
-elif [ -f /etc/issue ]; then
-    OS_NAME=$(cat /etc/issue | head -n1 | sed -e 's/\\n//g' -e 's/\\l//g' -e 's/ //g')
-else
-    OS_NAME="未知系统"
-fi
-echo -e "${YELLOW}系统发行版：${NC}$OS_NAME"
+# 3. 空函数（兼容原版调用，无实际作用）
+send_stats() { :; }
+output_status() { :; }
 
-# 内核版本
-KERNEL=$(uname -r)
-echo -e "${YELLOW}内核版本：${NC}$KERNEL"
+# ========== 核心：复刻原版linux_info函数 ==========
+linux_info() {
+    clear
+    echo -e "${YELLOW}正在查询系统信息……${gl_bai}"
+    send_stats "系统信息查询"
 
-# 系统架构
-ARCH=$(uname -m)
-echo -e "${YELLOW}系统架构：${NC}$ARCH"
+    # 采集IP和流量信息
+    ip_address
 
-# 主机名
-HOSTNAME=$(hostname)
-echo -e "${YELLOW}主机名：${NC}$HOSTNAME"
+    # CPU型号
+    local cpu_info=$(lscpu | awk -F': +' '/Model name:/ {print $2; exit}')
+    
+    # 实时CPU使用率（原版核心计算逻辑）
+    local cpu_usage_percent=$(awk '{u=$2+$4; t=$2+$4+$5; if (NR==1){u1=u; t1=t;} else printf "%.0f\n", (($2+$4-u1) * 100 / (t-t1))}' \
+        <(grep 'cpu ' /proc/stat) <(sleep 1; grep 'cpu ' /proc/stat))
+    
+    # CPU核心数
+    local cpu_cores=$(nproc)
+    
+    # CPU频率（转GHz）
+    local cpu_freq=$(cat /proc/cpuinfo | grep "MHz" | head -n 1 | awk '{printf "%.1f GHz\n", $4/1000}')
+    
+    # 内存信息（MB，带百分比）
+    local mem_info=$(free -b | awk 'NR==2{printf "%.2f/%.2fM (%.2f%%)", $3/1024/1024, $2/1024/1024, $3*100/$2}')
+    
+    # 磁盘信息（根目录）
+    local disk_info=$(df -h | awk '$NF=="/"{printf "%s/%s (%s)", $3, $2, $5}')
+    
+    # IP地理信息（ipinfo.io）
+    local ipinfo=$(curl -s --max-time 5 ipinfo.io)
+    local country=$(echo "$ipinfo" | grep 'country' | awk -F': ' '{print $2}' | tr -d '",')
+    local city=$(echo "$ipinfo" | grep 'city' | awk -F': ' '{print $2}' | tr -d '",')
+    local isp_info=$(echo "$ipinfo" | grep 'org' | awk -F': ' '{print $2}' | tr -d '",')
+    
+    # 系统负载
+    local load=$(uptime | awk '{print $(NF-2), $(NF-1), $NF}')
+    
+    # DNS地址
+    local dns_addresses=$(awk '/^nameserver/{printf "%s ", $2} END {print ""}' /etc/resolv.conf)
+    
+    # CPU架构
+    local cpu_arch=$(uname -m)
+    
+    # 主机名
+    local hostname=$(uname -n)
+    
+    # 内核版本
+    local kernel_version=$(uname -r)
+    
+    # 网络算法（拥塞控制+队列算法）
+    local congestion_algorithm=$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null)
+    local queue_algorithm=$(sysctl -n net.core.default_qdisc 2>/dev/null)
+    
+    # 系统版本
+    local os_info=$(grep PRETTY_NAME /etc/os-release | cut -d '=' -f2 | tr -d '"')
+    
+    output_status
+    
+    # 当前时间
+    local current_time=$(date "+%Y-%m-%d %I:%M %p")
+    
+    # 交换分区信息
+    local swap_info=$(free -m | awk 'NR==3{used=$3; total=$2; if (total == 0) {percentage=0} else {percentage=used*100/total}; printf "%dM/%dM (%d%%)", used, total, percentage}')
+    
+    # 系统运行时长
+    local runtime=$(cat /proc/uptime | awk -F. '{run_days=int($1 / 86400);run_hours=int(($1 % 86400) / 3600);run_minutes=int(($1 % 3600) / 60); if (run_days > 0) printf("%d天 ", run_days); if (run_hours > 0) printf("%d时 ", run_hours); printf("%d分\n", run_minutes)}')
+    
+    # 时区
+    local timezone=$(current_timezone)
+    
+    # TCP/UDP连接数
+    local tcp_count=$(ss -t | wc -l 2>/dev/null || echo "0")
+    local udp_count=$(ss -u | wc -l 2>/dev/null || echo "0")
 
-# 系统运行时间
-UPTIME=$(uptime -p | sed 's/up //g')
-echo -e "${YELLOW}运行时间：${NC}$UPTIME"
+    # 输出最终信息（原版格式）
+    clear
+    echo -e "系统信息查询"
+    echo -e "${YELLOW}-------------"
+    echo -e "${YELLOW}主机名:         ${gl_bai}$hostname"
+    echo -e "${YELLOW}系统版本:       ${gl_bai}$os_info"
+    echo -e "${YELLOW}Linux版本:      ${gl_bai}$kernel_version"
+    echo -e "${YELLOW}-------------"
+    echo -e "${YELLOW}CPU架构:        ${gl_bai}$cpu_arch"
+    echo -e "${YELLOW}CPU型号:        ${gl_bai}$cpu_info"
+    echo -e "${YELLOW}CPU核心数:      ${gl_bai}$cpu_cores"
+    echo -e "${YELLOW}CPU频率:        ${gl_bai}$cpu_freq"
+    echo -e "${YELLOW}-------------"
+    echo -e "${YELLOW}CPU占用:        ${gl_bai}$cpu_usage_percent%"
+    echo -e "${YELLOW}系统负载:       ${gl_bai}$load"
+    echo -e "${YELLOW}TCP|UDP连接数:  ${gl_bai}$tcp_count|$udp_count"
+    echo -e "${YELLOW}物理内存:       ${gl_bai}$mem_info"
+    echo -e "${YELLOW}虚拟内存:       ${gl_bai}$swap_info"
+    echo -e "${YELLOW}硬盘占用:       ${gl_bai}$disk_info"
+    echo -e "${YELLOW}-------------"
+    echo -e "${YELLOW}总接收:         ${gl_bai}$rx"
+    echo -e "${YELLOW}总发送:         ${gl_bai}$tx"
+    echo -e "${YELLOW}-------------"
+    echo -e "${YELLOW}网络算法:       ${gl_bai}$congestion_algorithm $queue_algorithm"
+    echo -e "${YELLOW}-------------"
+    echo -e "${YELLOW}运营商:         ${gl_bai}$isp_info"
+    if [ -n "$ipv4_address" ] && [ "$ipv4_address" != "未获取到" ]; then
+        echo -e "${YELLOW}IPv4地址:       ${gl_bai}$ipv4_address"
+    fi
 
-# 系统启动时间
-BOOT_TIME=$(who -b | awk '{print $3, $4}')
-echo -e "${YELLOW}启动时间：${NC}$BOOT_TIME"
+    if [ -n "$ipv6_address" ] && [ "$ipv6_address" != "未获取到/未开启" ]; then
+        echo -e "${YELLOW}IPv6地址:       ${gl_bai}$ipv6_address"
+    fi
+    echo -e "${YELLOW}DNS地址:        ${gl_bai}$dns_addresses"
+    echo -e "${YELLOW}地理位置:       ${gl_bai}$country $city"
+    echo -e "${YELLOW}系统时间:       ${gl_bai}$timezone $current_time"
+    echo -e "${YELLOW}-------------"
+    echo -e "${YELLOW}运行时长:       ${gl_bai}$runtime"
+    echo
+}
 
-# ========== 2. 硬件资源信息 ==========
-echo -e "\n${GREEN}【2. 硬件资源信息】${NC}"
-echo -e "---------------------------------------------"
+# ========== 执行脚本 + 交互逻辑 ==========
+# 调用核心函数
+linux_info
 
-# CPU信息
-CPU_MODEL=$(cat /proc/cpuinfo | grep 'model name' | head -n1 | cut -d: -f2 | sed -e 's/^[ \t]*//')
-CPU_CORES=$(grep -c ^processor /proc/cpuinfo)
-CPU_THREADS=$(nproc)
-echo -e "${YELLOW}CPU型号：${NC}$CPU_MODEL"
-echo -e "${YELLOW}CPU核心数：${NC}$CPU_CORES (线程数：$CPU_THREADS)"
-
-# 内存信息
-if command -v free &>/dev/null; then
-    MEM_TOTAL=$(free -h | grep Mem | awk '{print $2}')
-    MEM_USED=$(free -h | grep Mem | awk '{print $3}')
-    MEM_FREE=$(free -h | grep Mem | awk '{print $4}')
-    MEM_USAGE=$(free | grep Mem | awk '{printf("%.1f%%", $3/$2*100)}')
-    echo -e "${YELLOW}内存总量：${NC}$MEM_TOTAL"
-    echo -e "${YELLOW}已用内存：${NC}$MEM_USED (使用率：$MEM_USAGE)"
-    echo -e "${YELLOW}空闲内存：${NC}$MEM_FREE"
-else
-    echo -e "${YELLOW}内存信息：${NC}无法获取"
-fi
-
-# 磁盘信息
-if command -v df &>/dev/null; then
-    DISK_TOTAL=$(df -h --total | grep total | awk '{print $2}')
-    DISK_USED=$(df -h --total | grep total | awk '{print $3}')
-    DISK_FREE=$(df -h --total | grep total | awk '{print $4}')
-    DISK_USAGE=$(df -h --total | grep total | awk '{print $5}')
-    echo -e "${YELLOW}磁盘总量：${NC}$DISK_TOTAL"
-    echo -e "${YELLOW}已用磁盘：${NC}$DISK_USED (使用率：$DISK_USAGE)"
-    echo -e "${YELLOW}空闲磁盘：${NC}$DISK_FREE"
-else
-    echo -e "${YELLOW}磁盘信息：${NC}无法获取"
-fi
-
-# ========== 3. 网络信息 ==========
-echo -e "\n${GREEN}【3. 网络信息】${NC}"
-echo -e "---------------------------------------------"
-
-# 公网IP（IPv4）
-IPV4=$(curl -s --max-time 5 ip.sb -4 || curl -s --max-time 5 ifconfig.me -4 || echo "未获取到")
-echo -e "${YELLOW}公网IPv4：${NC}$IPV4"
-
-# 公网IP（IPv6）
-IPV6=$(curl -s --max-time 5 ip.sb -6 || curl -s --max-time 5 ifconfig.me -6 || echo "未获取到/未开启")
-echo -e "${YELLOW}公网IPv6：${NC}$IPV6"
-
-# 网卡信息
-echo -e "${YELLOW}网卡列表：${NC}"
-ip link show | grep -E '^[0-9]' | while read -r line; do
-    NIC=$(echo $line | awk '{print $2}' | sed 's/://')
-    IP=$(ip addr show $NIC | grep 'inet ' | awk '{print $2}' | head -n1 || echo "无IPv4")
-    IP6=$(ip addr show $NIC | grep 'inet6 ' | awk '{print $2}' | head -n1 || echo "无IPv6")
-    echo -e "  - $NIC: $IP | $IP6"
-done
-
-# ========== 4. 其他信息 ==========
-echo -e "\n${GREEN}【4. 其他信息】${NC}"
-echo -e "---------------------------------------------"
-
-# 当前用户
-CURRENT_USER=$(whoami)
-echo -e "${YELLOW}当前登录用户：${NC}$CURRENT_USER"
-
-# 时区
-TIMEZONE=$(timedatectl show -p Timezone --value 2>/dev/null || date +%Z)
-echo -e "${YELLOW}系统时区：${NC}$TIMEZONE"
-
-# 语言编码
-LANG=$(locale | grep LANG= | cut -d= -f2)
-echo -e "${YELLOW}语言编码：${NC}$LANG"
-
-# 防火墙状态
-if command -v ufw &>/dev/null; then
-    FIREWALL=$(ufw status | head -n1)
-elif command -v firewall-cmd &>/dev/null; then
-    FIREWALL=$(firewall-cmd --state 2>/dev/null || echo "未运行")
-else
-    FIREWALL="未检测到防火墙"
-fi
-echo -e "${YELLOW}防火墙状态：${NC}$FIREWALL"
-
-# 结束标识
-echo -e "\n${BLUE}=============================================${NC}"
-echo -e "${GREEN}✅ 系统信息查询完成！${NC}"
-echo -e "${BLUE}=============================================${NC}"
-echo -e "\n${CYAN}按任意键退出...${NC}"
-
+# 按任意键退出（你的风格）
+echo -e "${CYAN}按任意键退出...${NC}"
 read -n 1 -s
 echo -e "\n"
