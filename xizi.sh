@@ -17,12 +17,61 @@ URL_SYS_INFO="https://raw.githubusercontent.com/siilao/xizicc/main/modules/sys_i
 URL_SYS_UPDATE="https://raw.githubusercontent.com/siilao/xizicc/main/modules/sys_update.sh"
 URL_SYS_CLEAN="https://raw.githubusercontent.com/siilao/xizicc/main/modules/sys_clean.sh"
 URL_CHANGELOG="https://raw.githubusercontent.com/siilao/xizicc/main/modules/changelog.txt"
+# 仅保留脚本地址（无需version.txt）
+URL_LATEST_SCRIPT="https://raw.githubusercontent.com/siilao/xizicc/main/xizi.sh"
 # ==============================================
 
 # 脚本路径（获取xizi.sh的绝对路径，关键！）
 SCRIPT_PATH=$(readlink -f "$0")
 # 全局快捷键目标路径
 SHORTCUT_PATH="/usr/local/bin/x"
+
+# 优化：直接从远程脚本提取版本号进行对比
+check_and_update_version() {
+    show_title
+    echo -e "${BLUE}🔍 正在检查版本更新...${NC}\n"
+
+    # 抓取远程脚本内容，并提取VERSION变量值
+    # grep匹配VERSION定义行 + sed提取引号内的版本号
+    remote_version=$(curl -s "$URL_LATEST_SCRIPT" | grep '^VERSION="' | sed -E 's/VERSION="(.*)"/\1/')
+
+    # 检查是否成功获取远程版本
+    if [ -z "$remote_version" ] || [ "$remote_version" = "$VERSION" ]; then
+        if [ -z "$remote_version" ]; then
+            echo -e "${YELLOW}⚠️  无法获取远程版本信息，跳过更新检查${NC}\n"
+        else
+            echo -e "${GREEN}✅ 当前已是最新版本：v${VERSION}${NC}\n"
+        fi
+        sleep 1
+        return
+    fi
+
+    # 版本不一致，执行更新
+    echo -e "${GREEN}发现新版本：v${remote_version}（当前版本：v${VERSION}）${NC}"
+    echo -e "${YELLOW}正在自动更新脚本...${NC}\n"
+
+    # 下载最新脚本并替换
+    if curl -s "$URL_LATEST_SCRIPT" -o "$SCRIPT_PATH.tmp"; then
+        # 替换前先备份旧版本（加时间戳，避免覆盖）
+        cp "$SCRIPT_PATH" "${SCRIPT_PATH}.old_$(date +%Y%m%d_%H%M%S)"
+        # 替换脚本文件
+        mv "$SCRIPT_PATH.tmp" "$SCRIPT_PATH"
+        # 添加执行权限
+        chmod +x "$SCRIPT_PATH"
+
+        echo -e "${GREEN}✅ 脚本更新成功！已自动切换到新版本 v${remote_version}${NC}"
+        echo -e "${YELLOW}正在重启脚本...${NC}\n"
+        sleep 2
+
+        # 重新执行新版本脚本并退出当前进程
+        exec "$SCRIPT_PATH"
+        exit 0
+    else
+        echo -e "${RED}❌ 脚本更新失败，请手动下载最新版本${NC}"
+        echo -e "${RED}手动更新命令：curl -s ${URL_LATEST_SCRIPT} -o ${SCRIPT_PATH} && chmod +x ${SCRIPT_PATH}${NC}\n"
+        sleep 2
+    fi
+}
 
 # 核心：首次运行自动配置快捷键（无交互）
 auto_setup_shortcut() {
@@ -57,7 +106,7 @@ show_title() {
     echo -e "${PURPLE}戏子一键工具箱  v${VERSION} 只为更简单的Linux的使用！${NC}"
     echo -e "${BLUE}=========================================${NC}"
     echo -e "${YELLOW}适配Ubuntu/Debian/CentOS/Alpine/Kali/Arch/RedHat/Fedora/Alma/Rocky系统${NC}"
-    echo -e "-输入${YELLOW}x${BLUE}可快速启动此脚本${NC}}"
+    echo -e "${YELLOW}输入${RED}x${YELLOW}可快速启动此脚本${NC}"
     echo -e ""
 }
 
@@ -135,7 +184,9 @@ main_menu() {
 }
 
 # ========== 脚本启动入口 ==========
-# 第一步：自动配置快捷键（首次运行触发，后续跳过）
+# 第一步：版本检查与更新
+check_and_update_version
+# 第二步：自动配置快捷键（首次运行触发，后续跳过）
 auto_setup_shortcut
-# 第二步：进入主菜单
+# 第三步：进入主菜单
 main_menu
