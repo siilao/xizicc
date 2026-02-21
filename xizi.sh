@@ -57,6 +57,7 @@ show_title() {
     echo -e "${PURPLE}戏子一键工具箱  v${VERSION} 只为更简单的Linux的使用！${NC}"
     echo -e "${BLUE}=========================================${NC}"
     echo -e "${YELLOW}适配Ubuntu/Debian/CentOS/Alpine/Kali/Arch/RedHat/Fedora/Alma/Rocky系统${NC}"
+    echo -e "-输入${YELLOW}x${BLUE}可快速启动此脚本${NC}}"
     echo -e ""
 }
 
