@@ -1,6 +1,6 @@
 #!/bin/bash
 # Xizicc 一键工具箱
-VERSION="1.0.1"
+VERSION="1.0.2"
 
 # 颜色
 RED='\033[0;31m'
