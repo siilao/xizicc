@@ -25,8 +25,5 @@ or
 GitHub版一键脚本 部分小伙伴会遇到官网版出现大段乱码！就用GitHub版本吧！
 
 ```
-apt install -y git
-git clone https://github.com/siilao/xizicc.git && chmod +x xizi.sh && ./xizi.sh
+apt install -y git && git clone https://github.com/siilao/xizicc.git && chmod +x xizi.sh && ./xizi.sh
 ```
-- Fedora：dnf install -y curl wget
-- CentOS/Rocky/Almalinux/Oracle-linux/Amazon-linux：yum install -y curl wget
