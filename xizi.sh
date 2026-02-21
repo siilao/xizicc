@@ -19,8 +19,11 @@ URL_SYS_CLEAN="https://raw.githubusercontent.com/siilao/xizicc/main/modules/sys_
 URL_CHANGELOG="https://raw.githubusercontent.com/siilao/xizicc/main/modules/changelog.txt"
 # ==============================================
 
-# 脚本路径
-SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+# 脚本路径（获取xizi.sh的绝对路径，关键！）
+SCRIPT_PATH=$(readlink -f "$0")
+SCRIPT_DIR=$(dirname "${SCRIPT_PATH}")
+# 全局快捷键目标路径
+SHORTCUT_PATH="/usr/local/bin/x"
 
 # 一键验证地址（启动时自动检查，告诉你哪个地址有问题）
 #verify_urls() {
