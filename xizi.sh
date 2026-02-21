@@ -11,14 +11,33 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-# 路径
+# 脚本路径（无需本地modules目录）
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
-MODULE_DIR="${SCRIPT_DIR}/modules"
+# GitHub Raw 基础地址（替换成你的仓库路径）
+GITHUB_RAW_BASE="https://raw.githubusercontent.com/siilao/xizicc/refs/heads/main/modules"
+# 各模块的Raw地址
+SYS_INFO_URL="${GITHUB_RAW_BASE}/sys_info.sh"
+SYS_UPDATE_URL="${GITHUB_RAW_BASE}/sys_update.sh"
+SYS_CLEAN_URL="${GITHUB_RAW_BASE}/sys_clean.sh"
+CHANGELOG_URL="${GITHUB_RAW_BASE}/changelog.txt"
 # 独立日志文件路径
 CHANGELOG_FILE="${MODULE_DIR}/changelog.txt"
+# 快捷键目标路径（系统全局可执行目录）
+SHORTCUT_PATH="/usr/local/bin/x"
 
 # 替换成你的GitHub仓库地址
 GIT_REPO_URL="https://github.com/siilao/xizicc.git"
+
+# 网络检测函数
+check_network() {
+    if ! curl -s --head --request GET "https://github.com" | grep "200 OK" > /dev/null; then
+        echo -e "${RED}❌ 网络连接失败！无法访问GitHub，请检查网络后重试。${NC}"
+        sleep 3
+        main_menu
+        return 1
+    fi
+    return 0
+}
 
 show_title() {
     clear
@@ -120,9 +139,9 @@ main_menu() {
     read -p "请输入选项：" choice
 
     case $choice in
-        1) bash "${MODULE_DIR}/sys_info.sh" ;;
-        2) bash "${MODULE_DIR}/sys_update.sh" ;;
-        3) bash "${MODULE_DIR}/sys_clean.sh" ;;
+        1) run_remote_module "${SYS_INFO_URL}" "系统信息查询" ;;
+        2) run_remote_module "${SYS_UPDATE_URL}" "系统更新" ;;
+        3) run_remote_module "${SYS_CLEAN_URL}" "系统清理" ;;
         8) show_changelog ;;
         9) update_full_git ;;
         0) echo -e "${CYAN}感谢使用戏子一键工具箱，再见！${NC}"; exit 0 ;;
