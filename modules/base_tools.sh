@@ -449,11 +449,3 @@ if [ "$(id -u)" -ne 0 ]; then
     sleep 2
 fi
 linux_tools
-
-# 结束标识
-echo -e "\n${BLUE}=============================================${NC}"
-echo -e "${GREEN}✅ 操作完成！${NC}"
-echo -e "${BLUE}=============================================${NC}"
-echo -e "\n${CYAN}按任意键退出...${NC}"
-read -n 1 -s
-echo -e "\n"
