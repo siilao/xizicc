@@ -7,7 +7,7 @@ YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
-窗='\033[0m'
+NC='\033[0m'
 
 # ========== 补充原版依赖函数 ==========
 # 1. 采集IP和流量信息（原版ip_address函数核心逻辑）
@@ -44,14 +44,11 @@ current_timezone() {
     fi
 }
 
-# 3. 空函数（兼容原版调用，无实际作用）
-send_stats() { :; }
-output_status() { :; }
 
 # ========== 核心：复刻原版linux_info函数 ==========
 linux_info() {
     clear
-    echo -e "${YELLOW}正在查询系统信息……${gl_bai}"
+    echo -e "${YELLOW}正在查询系统信息……${NC}"
     send_stats "系统信息查询"
 
     # 采集IP和流量信息
@@ -126,40 +123,40 @@ linux_info() {
     clear
     echo -e "系统信息查询"
     echo -e "${YELLOW}-------------"
-    echo -e "${YELLOW}主机名:         ${gl_bai}$hostname"
-    echo -e "${YELLOW}系统版本:       ${gl_bai}$os_info"
-    echo -e "${YELLOW}Linux版本:      ${gl_bai}$kernel_version"
+    echo -e "${YELLOW}主机名:         ${NC}$hostname"
+    echo -e "${YELLOW}系统版本:       ${NC}$os_info"
+    echo -e "${YELLOW}Linux版本:      ${NC}$kernel_version"
     echo -e "${YELLOW}-------------"
-    echo -e "${YELLOW}CPU架构:        ${gl_bai}$cpu_arch"
-    echo -e "${YELLOW}CPU型号:        ${gl_bai}$cpu_info"
-    echo -e "${YELLOW}CPU核心数:      ${gl_bai}$cpu_cores"
-    echo -e "${YELLOW}CPU频率:        ${gl_bai}$cpu_freq"
+    echo -e "${YELLOW}CPU架构:        ${NC}$cpu_arch"
+    echo -e "${YELLOW}CPU型号:        ${NC}$cpu_info"
+    echo -e "${YELLOW}CPU核心数:      ${NC}$cpu_cores"
+    echo -e "${YELLOW}CPU频率:        ${NC}$cpu_freq"
     echo -e "${YELLOW}-------------"
-    echo -e "${YELLOW}CPU占用:        ${gl_bai}$cpu_usage_percent%"
-    echo -e "${YELLOW}系统负载:       ${gl_bai}$load"
-    echo -e "${YELLOW}TCP|UDP连接数:  ${gl_bai}$tcp_count|$udp_count"
-    echo -e "${YELLOW}物理内存:       ${gl_bai}$mem_info"
-    echo -e "${YELLOW}虚拟内存:       ${gl_bai}$swap_info"
-    echo -e "${YELLOW}硬盘占用:       ${gl_bai}$disk_info"
+    echo -e "${YELLOW}CPU占用:        ${NC}$cpu_usage_percent%"
+    echo -e "${YELLOW}系统负载:       ${NC}$load"
+    echo -e "${YELLOW}TCP|UDP连接数:  ${NC}$tcp_count|$udp_count"
+    echo -e "${YELLOW}物理内存:       ${NC}$mem_info"
+    echo -e "${YELLOW}虚拟内存:       ${NC}$swap_info"
+    echo -e "${YELLOW}硬盘占用:       ${NC}$disk_info"
     echo -e "${YELLOW}-------------"
-    echo -e "${YELLOW}总接收:         ${gl_bai}$rx"
-    echo -e "${YELLOW}总发送:         ${gl_bai}$tx"
+    echo -e "${YELLOW}总接收:         ${NC}$rx"
+    echo -e "${YELLOW}总发送:         ${NC}$tx"
     echo -e "${YELLOW}-------------"
-    echo -e "${YELLOW}网络算法:       ${gl_bai}$congestion_algorithm $queue_algorithm"
+    echo -e "${YELLOW}网络算法:       ${NC}$congestion_algorithm $queue_algorithm"
     echo -e "${YELLOW}-------------"
-    echo -e "${YELLOW}运营商:         ${gl_bai}$isp_info"
+    echo -e "${YELLOW}运营商:         ${NC}$isp_info"
     if [ -n "$ipv4_address" ] && [ "$ipv4_address" != "未获取到" ]; then
-        echo -e "${YELLOW}IPv4地址:       ${gl_bai}$ipv4_address"
+        echo -e "${YELLOW}IPv4地址:       ${NC}$ipv4_address"
     fi
 
     if [ -n "$ipv6_address" ] && [ "$ipv6_address" != "未获取到/未开启" ]; then
-        echo -e "${YELLOW}IPv6地址:       ${gl_bai}$ipv6_address"
+        echo -e "${YELLOW}IPv6地址:       ${NC}$ipv6_address"
     fi
-    echo -e "${YELLOW}DNS地址:        ${gl_bai}$dns_addresses"
-    echo -e "${YELLOW}地理位置:       ${gl_bai}$country $city"
-    echo -e "${YELLOW}系统时间:       ${gl_bai}$timezone $current_time"
+    echo -e "${YELLOW}DNS地址:        ${NC}$dns_addresses"
+    echo -e "${YELLOW}地理位置:       ${NC}$country $city"
+    echo -e "${YELLOW}系统时间:       ${NC}$timezone $current_time"
     echo -e "${YELLOW}-------------"
-    echo -e "${YELLOW}运行时长:       ${gl_bai}$runtime"
+    echo -e "${YELLOW}运行时长:       ${NC}$runtime"
     echo
 }
 

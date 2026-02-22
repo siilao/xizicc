@@ -143,7 +143,7 @@ auto_setup_shortcut() {
         echo -e "sudo ln -s ${SCRIPT_PATH} ${SHORTCUT_PATH}"
         echo -e "sudo chmod +x ${SHORTCUT_PATH}\n"
     fi
-    sleep 2
+    sleep 3
 }
 
 show_title() {
