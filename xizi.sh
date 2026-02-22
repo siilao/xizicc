@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="1.0.3"
+VERSION="1.0.4"
 
 # 颜色
 RED='\033[0;31m'
@@ -16,6 +16,15 @@ URL_SYS_UPDATE="https://raw.githubusercontent.com/siilao/xizicc/main/modules/sys
 URL_SYS_CLEAN="https://raw.githubusercontent.com/siilao/xizicc/main/modules/sys_clean.sh"
 URL_CHANGELOG="https://raw.githubusercontent.com/siilao/xizicc/main/modules/changelog.txt"
 URL_BASE_TOOLS="https://raw.githubusercontent.com/siilao/xizicc/main/modules/base_tools.sh"
+
+# 外面的世界 二级菜单模块地址
+URL_WORLD_PROXY="https://raw.githubusercontent.com/siilao/xizicc/main/world/sys_proxy.sh"
+URL_WORLD_CDN="https://raw.githubusercontent.com/siilao/xizicc/main/world/sys_bbr.sh"
+# 新增：网络连通性检测 三级菜单模块地址
+URL_CHECK_PING="https://raw.githubusercontent.com/siilao/xizicc/main/world/check_ping.sh"
+URL_CHECK_PORT="https://raw.githubusercontent.com/siilao/xizicc/main/world/check_port.sh"
+URL_CHECK_SPEED="https://raw.githubusercontent.com/siilao/xizicc/main/world/check_speed.sh"
+
 # 仅保留脚本地址（无需version.txt）
 URL_LATEST_SCRIPT="https://raw.githubusercontent.com/siilao/xizicc/main/xizi.sh"
 # ==============================================
@@ -109,10 +118,11 @@ show_title() {
     echo -e ""
 }
 
-# 运行远程模块（只用统一的地址变量）
+# 优化run_module函数：支持返回指定菜单（适配二级菜单）
 run_module() {
     local url=$1
     local name=$2
+    local return_menu=${3:-main_menu}  # 默认返回主菜单
 
     show_title
     echo -e "${GREEN}正在运行【${name}】模块...${NC}\n"
@@ -130,7 +140,7 @@ run_module() {
 
     rm -f "$temp_file"
     sleep 2
-    main_menu
+    $return_menu  # 执行指定的返回菜单
 }
 
 # 查看更新日志（只用统一的地址变量）
@@ -153,6 +163,60 @@ show_changelog() {
     main_menu
 }
 
+# ========== 外面的世界 二级菜单 ==========
+world_submenu() {
+    show_title
+    echo -e "${BLUE}=========================================${NC}"
+    echo -e "${PURPLE}             🌍 外面的世界子菜单         ${NC}"
+    echo -e "${BLUE}=========================================${NC}"
+    echo -e " 1. ${YELLOW}代理配置工具${NC}"
+    echo -e " 2. ${YELLOW}BBR加速配置${NC}"
+    echo -e " 3. ${YELLOW}网络连通性检测${NC}"  # 改文本提示
+    echo -e "${BLUE}=========================================${NC}"
+    echo -e " 0. ${CYAN}返回主菜单${NC}"
+    echo -e "${BLUE}=========================================${NC}"
+    read -p "请输入子菜单选项：" sub_choice
+
+    case $sub_choice in
+        1) run_module "$URL_WORLD_PROXY" "代理配置工具" "world_submenu" ;;
+        2) run_module "$URL_WORLD_CDN" "BBR加速配置" "world_submenu" ;;
+        3) check_submenu ;;  # 改为进入三级菜单，不再直接调用模块
+        0) main_menu ;;
+        *)
+            echo -e "${RED}❌ 输入错误！请输入 0-3${NC}"
+            sleep 1
+            world_submenu
+            ;;
+    esac
+}
+
+# ========== 三级菜单：网络连通性检测 ==========
+check_submenu() {
+    show_title
+    echo -e "${BLUE}=========================================${NC}"
+    echo -e "${PURPLE}            📡 网络连通性检测（三级）${NC}"
+    echo -e "${BLUE}=========================================${NC}"
+    echo -e " 1. ${YELLOW}PING检测（延迟/丢包）${NC}"
+    echo -e " 2. ${YELLOW}端口连通性检测${NC}"
+    echo -e " 3. ${YELLOW}网速测试${NC}"
+    echo -e "${BLUE}=========================================${NC}"
+    echo -e " 0. ${CYAN}返回上一级（外面的世界）${NC}"
+    echo -e "${BLUE}=========================================${NC}"
+    read -p "请输入三级菜单选项：" sub3_choice
+
+    case $sub3_choice in
+        1) run_module "$URL_CHECK_PING" "PING检测" "check_submenu" ;;
+        2) run_module "$URL_CHECK_PORT" "端口连通性检测" "check_submenu" ;;
+        3) run_module "$URL_CHECK_SPEED" "网速测试" "check_submenu" ;;
+        0) world_submenu ;;  # 返回二级菜单（外面的世界）
+        *)
+            echo -e "${RED}❌ 输入错误！请输入 0-3${NC}"
+            sleep 1
+            check_submenu
+            ;;
+    esac
+}
+
 main_menu() {
     show_title
 
@@ -161,6 +225,7 @@ main_menu() {
     echo -e " 2. ${YELLOW}系统更新${NC}"
     echo -e " 3. ${YELLOW}系统清理${NC}"
     echo -e " 4. ${YELLOW}基础工具${NC}"
+    echo -e " 5. ${YELLOW}外面的世界${NC}"
     echo -e "${BLUE}=========================================${NC}"
     echo -e " 8. ${CYAN}查看更新日志${NC}"
     echo -e " 9. ${RED}退出脚本${NC}"
@@ -172,10 +237,11 @@ main_menu() {
         2) run_module "$URL_SYS_UPDATE" "系统更新" ;;
         3) run_module "$URL_SYS_CLEAN" "系统清理" ;;
         4) run_module "$URL_BASE_TOOLS" "基础工具" ;;
+        5) world_submenu ;; # 进入外面的世界二级菜单
         8) show_changelog ;;
         9) echo -e "${CYAN}再见！${NC}"; exit 0 ;;
         *)
-            echo -e "${RED}❌ 输入错误！请输入 0-3、8、9${NC}"
+            echo -e "${RED}❌ 输入错误！请输入 1-5、8、9${NC}"  # 修正错误提示
             sleep 1
             main_menu
             ;;
