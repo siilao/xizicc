@@ -236,31 +236,21 @@ proxy_submenu() {
     esac
 }
 
-# ========== 三级菜单：网络连通性检测 ==========
+# ========== 三级菜单：网络连通性检测（调用独立脚本） ==========
 check_submenu() {
     show_title
-    echo -e "${BLUE}=========================================${NC}"
-    echo -e "${PURPLE}            📡 网络连通性检测${NC}"
-    echo -e "${BLUE}=========================================${NC}"
-    echo -e " 1. ${YELLOW}PING检测（延迟/丢包）${NC}"
-    echo -e " 2. ${YELLOW}端口连通性检测${NC}"
-    echo -e " 3. ${YELLOW}网速测试${NC}"
-    echo -e "${BLUE}=========================================${NC}"
-    echo -e " 0. ${CYAN}返回上一级（外面的世界）${NC}"
-    echo -e "${BLUE}=========================================${NC}"
-    read -p "请输入三级菜单选项：" sub3_choice
+    echo -e "${GREEN}正在启动【网络连通性检测合集】...${NC}\n"
+    temp_file=$(mktemp)
+    curl -sL https://raw.githubusercontent.com/siilao/xizicc/main/modules/network_check.sh -o "$temp_file"
+    if [ -s "$temp_file" ]; then
+        bash "$temp_file"
+    else
+        echo -e "${RED}❌ 网络连通性检测脚本拉取失败${NC}"
+    fi
+    rm -f "$temp_file"
 
-    case $sub3_choice in
-        1) run_module "$URL_CHECK_PING" "PING检测" "check_submenu" ;;
-        2) run_module "$URL_CHECK_PORT" "端口连通性检测" "check_submenu" ;;
-        3) run_module "$URL_CHECK_SPEED" "网速测试" "check_submenu" ;;
-        0) world_submenu ;;  # 返回二级菜单（外面的世界）
-        *)
-            echo -e "${RED}❌ 输入错误！请输入 0-3${NC}"
-            sleep 1
-            check_submenu
-            ;;
-    esac
+    sleep 2
+    world_submenu  # 返回二级菜单
 }
 
 main_menu() {
