@@ -20,9 +20,9 @@ URL_BASE_TOOLS="https://raw.githubusercontent.com/siilao/xizicc/main/modules/bas
 # 外面的世界 二级菜单模块地址
 URL_WORLD_CDN="https://raw.githubusercontent.com/siilao/xizicc/main/world/sys_bbr.sh"
 # 新增：网络连通性检测 三级菜单模块地址
-URL_CHECK_PING="https://raw.githubusercontent.com/siilao/xizicc/main/world/check_ping.sh"
-URL_CHECK_PORT="https://raw.githubusercontent.com/siilao/xizicc/main/world/check_port.sh"
-URL_CHECK_SPEED="https://raw.githubusercontent.com/siilao/xizicc/main/world/check_speed.sh"
+#URL_CHECK_PING="https://raw.githubusercontent.com/siilao/xizicc/main/world/check_ping.sh"
+#URL_CHECK_PORT="https://raw.githubusercontent.com/siilao/xizicc/main/world/check_port.sh"
+#URL_CHECK_SPEED="https://raw.githubusercontent.com/siilao/xizicc/main/world/check_speed.sh"
 
 # 仅保留脚本地址（无需version.txt）
 URL_LATEST_SCRIPT="https://raw.githubusercontent.com/siilao/xizicc/main/xizi.sh"
