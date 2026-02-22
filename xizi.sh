@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="1.0.7"
+VERSION="1.0.8"
 
 # 颜色
 RED='\033[0;31m'
@@ -16,6 +16,7 @@ URL_SYS_UPDATE="https://raw.githubusercontent.com/siilao/xizicc/main/modules/sys
 URL_SYS_CLEAN="https://raw.githubusercontent.com/siilao/xizicc/main/modules/sys_clean.sh"
 URL_CHANGELOG="https://raw.githubusercontent.com/siilao/xizicc/main/modules/changelog.txt"
 URL_BASE_TOOLS="https://raw.githubusercontent.com/siilao/xizicc/main/modules/base_tools.sh"
+URL_SETTINGS="https://raw.githubusercontent.com/siilao/xizicc/main/modules/settings.sh"
 
 # 外面的世界 二级菜单模块地址
 URL_WORLD_CDN="https://raw.githubusercontent.com/siilao/xizicc/main/world/sys_bbr.sh"
@@ -318,6 +319,7 @@ main_menu() {
     echo -e " 3. ${YELLOW}系统清理${NC}"
     echo -e " 4. ${YELLOW}基础工具${NC}"
     echo -e " 5. ${YELLOW}外面的世界${NC}"
+    echo -e " 6. ${YELLOW}系统工具${NC}"
     echo -e "${BLUE}=========================================${NC}"
     echo -e " 8. ${CYAN}查看更新日志${NC}"
     echo -e " 9. ${RED}一键卸载脚本${NC}"  # 新增卸载入口
@@ -331,6 +333,7 @@ main_menu() {
         3) run_module "$URL_SYS_CLEAN" "系统清理" ;;
         4) run_module "$URL_BASE_TOOLS" "基础工具" ;;
         5) world_submenu ;; # 进入外面的世界二级菜单
+        6) run_module "$URL_SETTINGS" "基础工具" ;;
         8) show_changelog ;;
         9) uninstall_script ;;  # 调用卸载函数
         0) echo -e "${CYAN}再见！${NC}"; exit 0 ;;
