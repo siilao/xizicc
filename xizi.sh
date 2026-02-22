@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="1.0.4"
+VERSION="1.0.5"
 
 # 颜色
 RED='\033[0;31m'
@@ -18,7 +18,6 @@ URL_CHANGELOG="https://raw.githubusercontent.com/siilao/xizicc/main/modules/chan
 URL_BASE_TOOLS="https://raw.githubusercontent.com/siilao/xizicc/main/modules/base_tools.sh"
 
 # 外面的世界 二级菜单模块地址
-URL_WORLD_PROXY="https://raw.githubusercontent.com/siilao/xizicc/main/world/sys_proxy.sh"
 URL_WORLD_CDN="https://raw.githubusercontent.com/siilao/xizicc/main/world/sys_bbr.sh"
 # 新增：网络连通性检测 三级菜单模块地址
 URL_CHECK_PING="https://raw.githubusercontent.com/siilao/xizicc/main/world/check_ping.sh"
@@ -167,7 +166,7 @@ show_changelog() {
 world_submenu() {
     show_title
     echo -e "${BLUE}=========================================${NC}"
-    echo -e "${PURPLE}             🌍 外面的世界子菜单         ${NC}"
+    echo -e "${PURPLE}             🌍 外面的世界         ${NC}"
     echo -e "${BLUE}=========================================${NC}"
     echo -e " 1. ${YELLOW}代理配置工具${NC}"
     echo -e " 2. ${YELLOW}BBR加速配置${NC}"
@@ -178,7 +177,7 @@ world_submenu() {
     read -p "请输入子菜单选项：" sub_choice
 
     case $sub_choice in
-        1) run_module "$URL_WORLD_PROXY" "代理配置工具" "world_submenu" ;;
+        1) proxy_submenu ;;  # 进入代理配置三级菜单
         2) run_module "$URL_WORLD_CDN" "BBR加速配置" "world_submenu" ;;
         3) check_submenu ;;  # 改为进入三级菜单，不再直接调用模块
         0) main_menu ;;
@@ -190,11 +189,58 @@ world_submenu() {
     esac
 }
 
+# ========== 三级菜单：代理配置工具 ==========
+proxy_submenu() {
+    show_title
+    echo -e "${BLUE}=========================================${NC}"
+    echo -e "${PURPLE}            🛠️  代理配置工具${NC}"
+    echo -e "${BLUE}=========================================${NC}"
+    echo -e " 1. ${YELLOW}一键安装3x-ui${NC}"  # 核心功能：执行你指定的命令
+    echo -e " 2. ${YELLOW}（预留）其他代理工具${NC}" # 可扩展其他代理工具
+    echo -e "${BLUE}=========================================${NC}"
+    echo -e " 0. ${CYAN}返回上一级（外面的世界）${NC}"
+    echo -e "${BLUE}=========================================${NC}"
+    read -p "请输入代理配置选项：" sub3_choice
+
+    case $sub3_choice in
+        1)
+            # 执行3x-ui安装命令
+            show_title
+            echo -e "${GREEN}🚀 开始执行3x-ui一键安装...${NC}\n"
+            echo -e "${YELLOW}⚠️  注意：安装过程可能需要几分钟，请耐心等待${NC}"
+            echo -e "${YELLOW}⚠️  请确保服务器能访问GitHub，否则会安装失败${NC}\n"
+
+            # 执行你指定的3x-ui安装命令
+            if bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh); then
+                echo -e "\n${GREEN}✅ 3x-ui安装完成！${NC}"
+            else
+                echo -e "\n${RED}❌ 3x-ui安装失败！${NC}"
+                echo -e "${RED}💡 可能原因：网络不通/系统不兼容/权限不足${NC}"
+            fi
+
+            echo -e "\n${CYAN}按任意键返回三级菜单...${NC}"
+            read -n 1 -s
+            proxy_submenu  # 执行完返回当前三级菜单
+            ;;
+        2)
+            echo -e "\n${YELLOW}⚠️  该功能暂未开放，敬请期待！${NC}"
+            sleep 2
+            proxy_submenu
+            ;;
+        0) world_submenu ;;  # 返回二级菜单（外面的世界）
+        *)
+            echo -e "${RED}❌ 输入错误！请输入 0-2${NC}"
+            sleep 1
+            proxy_submenu
+            ;;
+    esac
+}
+
 # ========== 三级菜单：网络连通性检测 ==========
 check_submenu() {
     show_title
     echo -e "${BLUE}=========================================${NC}"
-    echo -e "${PURPLE}            📡 网络连通性检测（三级）${NC}"
+    echo -e "${PURPLE}            📡 网络连通性检测${NC}"
     echo -e "${BLUE}=========================================${NC}"
     echo -e " 1. ${YELLOW}PING检测（延迟/丢包）${NC}"
     echo -e " 2. ${YELLOW}端口连通性检测${NC}"
