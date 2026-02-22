@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# 检查是否为root用户
+if [ "$(id -u)" -ne 0 ]; then
+    echo -e "\033[0;31m❌ 错误：请使用root权限运行此脚本！\033[0m"
+    exit 1
+fi
+
 # 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -9,6 +15,17 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
+# 未定义函数的空实现
+show_title() {
+    clear
+    echo -e "${BLUE}=========================================${NC}"
+    echo -e "${PURPLE}             系统工具操作         ${NC}"
+    echo -e "${BLUE}=========================================${NC}"
+}
+
+break_end() {
+    : # 空操作
+}
 
 # 通用等待函数
 wait_key() {
@@ -19,6 +36,7 @@ wait_key() {
 
 # ========== 系统工具二级菜单（整合科技lion核心功能） ==========
 settings_submenu() {
+    clear
     echo -e "${BLUE}=========================================${NC}"
     echo -e "${PURPLE}             系统工具         ${NC}"
     echo -e "${BLUE}=========================================${NC}"
@@ -50,7 +68,11 @@ settings_submenu() {
             # 检查用户是否存在
             if id "$username" &>/dev/null; then
                 passwd "$username"
-                echo -e "\n${GREEN}✅ $username 密码修改完成！${NC}"
+                if [ $? -eq 0 ]; then
+                    echo -e "\n${GREEN}✅ $username 密码修改完成！${NC}"
+                else
+                    echo -e "\n${RED}❌ $username 密码修改失败！${NC}"
+                fi
             else
                 echo -e "\n${RED}❌ 用户 $username 不存在！${NC}"
             fi
@@ -116,7 +138,7 @@ settings_submenu() {
             if ! [[ "$new_port" =~ ^[0-9]+$ ]] || [ "$new_port" -lt 1 ] || [ "$new_port" -gt 65535 ]; then
                 echo -e "\n${RED}❌ 端口号必须是1-65535之间的数字！${NC}"
                 wait_key
-                break
+                return  # 替换break，避免退出case
             fi
 
             # 修改SSH配置
@@ -136,14 +158,21 @@ settings_submenu() {
             show_title
             echo -e "${GREEN}🌐 开始优化DNS地址${NC}\n"
 
+            # 停止systemd-resolved避免覆盖（Ubuntu兼容）
+            if command -v systemctl &>/dev/null; then
+                systemctl stop systemd-resolved &>/dev/null
+                systemctl disable systemd-resolved &>/dev/null
+            fi
+
             # 备份原有DNS配置
-            cp /etc/resolv.conf /etc/resolv.conf.bak &>/dev/null
+            cp /etc/resolv.conf /etc/resolv.conf.bak.$(date +%Y%m%d%H%M%S) &>/dev/null
 
             # 写入优化DNS
             echo "nameserver 223.5.5.5" > /etc/resolv.conf
             echo "nameserver 223.6.6.6" >> /etc/resolv.conf
             echo "nameserver 8.8.8.8" >> /etc/resolv.conf
             echo "nameserver 8.8.4.4" >> /etc/resolv.conf
+            chattr +i /etc/resolv.conf &>/dev/null  # 锁定文件防止被覆盖
 
             echo -e "${GREEN}✅ DNS已优化为阿里云+谷歌DNS！${NC}"
             echo -e "${YELLOW}当前DNS配置：${NC}"
@@ -157,9 +186,15 @@ settings_submenu() {
             echo -e "${YELLOW}⚠️  警告：重装系统会清空所有数据！${NC}\n"
             read -p "确认要重装系统吗？(y/n)：" reinstall_confirm
             if [ "$reinstall_confirm" = "y" ] || [ "$reinstall_confirm" = "Y" ]; then
-                echo -e "\n${GREEN}🚀 开始执行一键重装脚本...${NC}"
-                # 调用科技lion重装脚本（兼容主流架构）
-                bash <(curl -sSL https://git.io/reinstall.sh)
+                # 二次确认
+                read -p "再次确认：输入 YES 表示确定重装（所有数据将丢失）：" reinstall_confirm2
+                if [ "$reinstall_confirm2" = "YES" ]; then
+                    echo -e "\n${GREEN}🚀 开始执行一键重装脚本...${NC}"
+                    # 调用科技lion重装脚本（兼容主流架构）
+                    bash <(curl -sSL https://git.io/reinstall.sh)
+                else
+                    echo -e "\n${GREEN}✅ 已取消重装系统！${NC}"
+                fi
             else
                 echo -e "\n${GREEN}✅ 已取消重装系统！${NC}"
             fi
@@ -173,14 +208,28 @@ settings_submenu() {
             read -p "请输入要查询的端口（留空查看所有）：" check_port
 
             if [ -n "$check_port" ]; then
+                # 验证端口合法性
+                if ! [[ "$check_port" =~ ^[0-9]+$ ]] || [ "$check_port" -lt 1 ] || [ "$check_port" -gt 65535 ]; then
+                    echo -e "\n${RED}❌ 端口号必须是1-65535之间的数字！${NC}"
+                    wait_key
+                    return
+                fi
                 # 查询指定端口
-                lsof -i :"$check_port" || netstat -tulpn | grep "$check_port"
+                if command -v lsof &>/dev/null; then
+                    lsof -i :"$check_port"
+                else
+                    netstat -tulpn 2>/dev/null | grep ":$check_port"
+                fi
                 if [ $? -ne 0 ]; then
                     echo -e "\n${YELLOW}⚠️  端口 $check_port 未被占用！${NC}"
                 fi
             else
                 # 查看所有端口
-                netstat -tulpn
+                if command -v ss &>/dev/null; then
+                    ss -tulpn
+                else
+                    netstat -tulpn 2>/dev/null
+                fi
             fi
             wait_key
             ;;
@@ -195,8 +244,13 @@ settings_submenu() {
 
             # 修改gai.conf配置
             gai_conf="/etc/gai.conf"
+            # 确保文件存在
+            touch "$gai_conf" &>/dev/null
+
             if [ "$ip_choice" = "1" ]; then
                 sed -i 's/^#precedence ::ffff:0:0\/96  100/precedence ::ffff:0:0\/96  100/g' "$gai_conf"
+                # 如果没有该行则添加
+                grep -q "precedence ::ffff:0:0/96  100" "$gai_conf" || echo "precedence ::ffff:0:0/96  100" >> "$gai_conf"
                 echo -e "\n${GREEN}✅ 已设置优先使用IPv4！${NC}"
             elif [ "$ip_choice" = "2" ]; then
                 sed -i 's/^precedence ::ffff:0:0\/96  100/#precedence ::ffff:0:0\/96  100/g' "$gai_conf"
@@ -217,25 +271,36 @@ settings_submenu() {
             if ! [[ "$swap_size" =~ ^[0-9]+$ ]]; then
                 echo -e "\n${RED}❌ 请输入有效的数字！${NC}"
                 wait_key
-                break
+                return  # 替换break
             fi
 
             # 关闭原有SWAP
             swapoff /swapfile &>/dev/null
             rm -f /swapfile &>/dev/null
 
-            # 创建新SWAP
-            fallocate -l "${swap_size}G" /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=$((swap_size*1024))
-            chmod 600 /swapfile
-            mkswap /swapfile
-            swapon /swapfile
+            # 创建新SWAP（兼容不同系统）
+            echo -e "📝 正在创建 ${swap_size}G SWAP文件，请稍候..."
+            if ! fallocate -l "${swap_size}G" /swapfile; then
+                echo -e "${YELLOW}⚠️ fallocate失败，使用dd创建...${NC}"
+                dd if=/dev/zero of=/swapfile bs=1M count=$((swap_size*1024)) &>/dev/null
+            fi
 
-            # 设置开机自启
-            echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
+            if [ -f "/swapfile" ]; then
+                chmod 600 /swapfile
+                mkswap /swapfile &>/dev/null
+                swapon /swapfile &>/dev/null
 
-            echo -e "\n${GREEN}✅ SWAP已设置为 ${swap_size}G！${NC}"
-            echo -e "${YELLOW}当前SWAP状态：${NC}"
-            swapon --show
+                # 移除原有配置，避免重复
+                sed -i '/\/swapfile swap swap defaults 0 0/d' /etc/fstab &>/dev/null
+                # 设置开机自启
+                echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
+
+                echo -e "\n${GREEN}✅ SWAP已设置为 ${swap_size}G！${NC}"
+                echo -e "${YELLOW}当前SWAP状态：${NC}"
+                swapon --show || free -m
+            else
+                echo -e "\n${RED}❌ SWAP文件创建失败！${NC}"
+            fi
             wait_key
             ;;
 
@@ -246,9 +311,18 @@ settings_submenu() {
             read -p "请输入时区（默认Asia/Shanghai）：" timezone
             timezone=${timezone:-Asia/Shanghai}
 
+            # 验证时区是否存在
+            if ! ls /usr/share/zoneinfo/"$timezone" &>/dev/null; then
+                echo -e "\n${RED}❌ 时区 $timezone 不存在！${NC}"
+                wait_key
+                return
+            fi
+
             # 设置时区
             ln -sf /usr/share/zoneinfo/"$timezone" /etc/localtime
-            echo "$timezone" > /etc/timezone
+            echo "$timezone" > /etc/timezone 2>/dev/null
+            # 同步时间
+            command -v timedatectl &>/dev/null && timedatectl set-timezone "$timezone" &>/dev/null
 
             echo -e "\n${GREEN}✅ 时区已设置为 $timezone！${NC}"
             echo -e "${YELLOW}当前系统时间：${NC}"
@@ -265,12 +339,14 @@ settings_submenu() {
             if [ -z "$new_hostname" ]; then
                 echo -e "\n${RED}❌ 主机名不能为空！${NC}"
                 wait_key
-                break
+                return  # 替换break
             fi
 
             # 修改主机名
-            hostnamectl set-hostname "$new_hostname"
-            sed -i "s/^$(hostname).*/$new_hostname/g" /etc/hosts &>/dev/null
+            old_hostname=$(hostname)
+            hostnamectl set-hostname "$new_hostname" &>/dev/null || hostname "$new_hostname"
+            # 修改hosts文件
+            sed -i "s/$old_hostname/$new_hostname/g" /etc/hosts &>/dev/null
 
             echo -e "\n${GREEN}✅ 主机名已修改为 $new_hostname！${NC}"
             echo -e "${YELLOW}⚠️  重新登录后生效${NC}"
@@ -287,14 +363,18 @@ settings_submenu() {
 
             if [ "$lang_choice" = "1" ]; then
                 # 切换为中文
-                apt install -y locales &>/dev/null || yum install -y glibc-langpack-zh &>/dev/null
-                locale-gen zh_CN.UTF-8 &>/dev/null
-                update-locale LANG=zh_CN.UTF-8
+                if command -v apt &>/dev/null; then
+                    apt update &>/dev/null && apt install -y locales &>/dev/null
+                    locale-gen zh_CN.UTF-8 &>/dev/null
+                elif command -v yum &>/dev/null; then
+                    yum install -y glibc-langpack-zh &>/dev/null
+                fi
+                update-locale LANG=zh_CN.UTF-8 &>/dev/null || echo "LANG=zh_CN.UTF-8" > /etc/locale.conf
                 echo -e "\n${GREEN}✅ 系统语言已切换为中文！${NC}"
                 echo -e "${YELLOW}⚠️  重新登录后生效${NC}"
-            elif [ "$lang_choice" = "1" ]; then
+            elif [ "$lang_choice" = "2" ]; then  # 修复重复的1
                 # 切换为英文
-                update-locale LANG=en_US.UTF-8
+                update-locale LANG=en_US.UTF-8 &>/dev/null || echo "LANG=en_US.UTF-8" > /etc/locale.conf
                 echo -e "\n${GREEN}✅ 系统语言已切换为英文！${NC}"
                 echo -e "${YELLOW}⚠️  重新登录后生效${NC}"
             else
@@ -304,29 +384,29 @@ settings_submenu() {
             ;;
 
         0)
-			  # 0选项改为直接退出脚本
-			  clear
-			  echo -e "\n${BLUE}=============================================${NC}"
-			  echo -e "${GREEN}✅ 已退出工具管理脚本！${NC}"
-			  echo -e "${BLUE}=============================================${NC}"
-			  echo -e "\n${CYAN}按任意键退出...${NC}"
-			  read -n 1 -s
-			  exit 0
-			  ;;
-		    *)
-			  echo -e "${RED}❌ 无效的输入！请输入菜单中的数字${NC}"
-			  sleep 1
-			  ;;
-	  esac
-	  break_end
-  done
+            # 0选项改为直接退出脚本
+            clear
+            echo -e "\n${BLUE}=============================================${NC}"
+            echo -e "${GREEN}✅ 已退出工具管理脚本！${NC}"
+            echo -e "${BLUE}=============================================${NC}"
+            echo -e "\n${CYAN}按任意键退出...${NC}"
+            read -n 1 -s
+            exit 0
+            ;;
+
+        *)
+            echo -e "${RED}❌ 无效的输入！请输入菜单中的数字${NC}"
+            sleep 1
+            settings_submenu  # 输入错误后返回菜单
+            ;;
+    esac
 }
 
 # ========== 执行脚本 + 交互逻辑 ==========
 # 调用核心函数
 settings_submenu
 
-# 按任意键退出（你的风格）
+# 按任意键退出
 echo -e "${CYAN}按任意键退出...${NC}"
 read -n 1 -s
 echo -e "\n"

@@ -49,7 +49,6 @@ current_timezone() {
 linux_info() {
     clear
     echo -e "${YELLOW}正在查询系统信息……${NC}"
-    send_stats "系统信息查询"
 
     # 采集IP和流量信息
     ip_address
@@ -100,8 +99,6 @@ linux_info() {
     
     # 系统版本
     local os_info=$(grep PRETTY_NAME /etc/os-release | cut -d '=' -f2 | tr -d '"')
-    
-    output_status
     
     # 当前时间
     local current_time=$(date "+%Y-%m-%d %I:%M %p")
