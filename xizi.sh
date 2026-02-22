@@ -240,16 +240,33 @@ proxy_submenu() {
 check_submenu() {
     show_title
     echo -e "${GREEN}正在启动【网络连通性检测合集】...${NC}\n"
+
+    # 1. 定义远程脚本地址（单独变量，方便维护）
+    NETWORK_CHECK_URL="https://raw.githubusercontent.com/siilao/xizicc/main/world/network_check.sh"
     temp_file=$(mktemp)
-    curl -sL https://raw.githubusercontent.com/siilao/xizicc/main/world/network_check.sh -o "$temp_file"
-    if [ -s "$temp_file" ]; then
-        bash "$temp_file"
+
+    # 2. 增加curl超时+错误提示，提升容错性
+    echo -e "${YELLOW}🔄 正在拉取检测脚本，请稍候...${NC}"
+    if curl -sL --connect-timeout 10 "$NETWORK_CHECK_URL" -o "$temp_file"; then
+        # 检查文件是否有效（非空）
+        if [ -s "$temp_file" ]; then
+            # 添加执行权限，避免脚本无权限运行
+            chmod +x "$temp_file"
+            bash "$temp_file"
+        else
+            echo -e "${RED}❌ 网络连通性检测脚本拉取失败：文件为空${NC}"
+            echo -e "${RED}💡 可能原因：远程文件不存在或内容为空${NC}"
+        fi
     else
-        echo -e "${RED}❌ 网络连通性检测脚本拉取失败${NC}"
+        echo -e "${RED}❌ 网络连通性检测脚本拉取失败：网络超时/地址错误${NC}"
+        echo -e "${RED}💡 请检查地址：${NETWORK_CHECK_URL}${NC}"
     fi
+
+    # 清理临时文件
     rm -f "$temp_file"
 
-    sleep 2
+    echo -e "\n${CYAN}按任意键返回上一级菜单...${NC}"
+    read -n 1 -s  # 等待用户按键，避免直接跳转
     world_submenu  # 返回二级菜单
 }
 
