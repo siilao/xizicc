@@ -241,7 +241,7 @@ check_submenu() {
     show_title
     echo -e "${GREEN}正在启动【网络连通性检测合集】...${NC}\n"
     temp_file=$(mktemp)
-    curl -sL https://raw.githubusercontent.com/siilao/xizicc/main/modules/network_check.sh -o "$temp_file"
+    curl -sL https://raw.githubusercontent.com/siilao/xizicc/main/world/network_check.sh -o "$temp_file"
     if [ -s "$temp_file" ]; then
         bash "$temp_file"
     else
