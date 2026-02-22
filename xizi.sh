@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="1.0.5"
+VERSION="1.0.7"
 
 # 颜色
 RED='\033[0;31m'
@@ -59,8 +59,6 @@ check_and_update_version() {
 
     # 下载最新脚本并替换
     if curl -s "$URL_LATEST_SCRIPT" -o "$SCRIPT_PATH.tmp"; then
-        # 替换前先备份旧版本（加时间戳，避免覆盖）
-        cp "$SCRIPT_PATH" "${SCRIPT_PATH}.old_$(date +%Y%m%d_%H%M%S)"
         # 替换脚本文件
         mv "$SCRIPT_PATH.tmp" "$SCRIPT_PATH"
         # 添加执行权限
@@ -77,6 +75,47 @@ check_and_update_version() {
         echo -e "${RED}❌ 脚本更新失败，请手动下载最新版本${NC}"
         echo -e "${RED}手动更新命令：curl -s ${URL_LATEST_SCRIPT} -o ${SCRIPT_PATH} && chmod +x ${SCRIPT_PATH}${NC}\n"
         sleep 2
+    fi
+}
+
+# ========== 一键卸载脚本（删文件+清快捷键） ==========
+uninstall_script() {
+    show_title
+    echo -e "${RED}=========================================${NC}"
+    echo -e "${PURPLE}⚠️  警告：即将卸载戏子一键工具箱${NC}"
+    echo -e "${RED}=========================================${NC}\n"
+    echo -e "${YELLOW}卸载后会执行以下操作：${NC}"
+    echo -e "1. 删除脚本文件：${SCRIPT_PATH}"
+    echo -e "2. 删除全局快捷键：${SHORTCUT_PATH}\n"
+
+    read -p "$(echo -e ${RED}"确认卸载？(y/n，默认n)：${NC}")" confirm
+    confirm=${confirm:-n}
+
+    if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+        # 1. 删除快捷键（如果存在）
+        if [ -L "${SHORTCUT_PATH}" ]; then
+            sudo rm -f "${SHORTCUT_PATH}"
+            echo -e "\n${GREEN}✅ 已删除全局快捷键：${SHORTCUT_PATH}${NC}"
+        else
+            echo -e "\n${YELLOW}⚠️  未找到全局快捷键，跳过删除${NC}"
+        fi
+
+        # 2. 删除脚本文件（先记录路径，避免删除后无法输出提示）
+        script_dir=$(dirname "$SCRIPT_PATH")
+        script_name=$(basename "$SCRIPT_PATH")
+        rm -f "$SCRIPT_PATH"
+
+        echo -e "${GREEN}✅ 已删除脚本文件：${SCRIPT_PATH}${NC}"
+        echo -e "\n${CYAN}🎉 戏子一键工具箱已完全卸载，无任何残留！${NC}"
+        echo -e "${CYAN}如需重新安装，请重新下载脚本：${NC}"
+        echo -e "${CYAN}curl -sL ${URL_LATEST_SCRIPT} -o xizi.sh && chmod +x xizi.sh${NC}\n"
+
+        sleep 3
+        exit 0  # 卸载完成后退出脚本
+    else
+        echo -e "\n${GREEN}✅ 你已取消卸载，脚本保留${NC}"
+        sleep 2
+        main_menu  # 返回主菜单
     fi
 }
 
@@ -281,7 +320,8 @@ main_menu() {
     echo -e " 5. ${YELLOW}外面的世界${NC}"
     echo -e "${BLUE}=========================================${NC}"
     echo -e " 8. ${CYAN}查看更新日志${NC}"
-    echo -e " 9. ${RED}退出脚本${NC}"
+    echo -e " 9. ${RED}一键卸载脚本${NC}"  # 新增卸载入口
+    echo -e " 0. ${RED}退出脚本${NC}"
     echo -e "${BLUE}=========================================${NC}"
     read -p "请输入选项：" choice
 
@@ -292,7 +332,8 @@ main_menu() {
         4) run_module "$URL_BASE_TOOLS" "基础工具" ;;
         5) world_submenu ;; # 进入外面的世界二级菜单
         8) show_changelog ;;
-        9) echo -e "${CYAN}再见！${NC}"; exit 0 ;;
+        9) uninstall_script ;;  # 调用卸载函数
+        0) echo -e "${CYAN}再见！${NC}"; exit 0 ;;
         *)
             echo -e "${RED}❌ 输入错误！请输入 1-5、8、9${NC}"  # 修正错误提示
             sleep 1
