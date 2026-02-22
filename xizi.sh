@@ -108,7 +108,7 @@ uninstall_script() {
         echo -e "${GREEN}✅ 已删除脚本文件：${SCRIPT_PATH}${NC}"
         echo -e "\n${CYAN}🎉 戏子一键工具箱已完全卸载，无任何残留！${NC}"
         echo -e "${CYAN}如需重新安装，请重新下载脚本：${NC}"
-        echo -e "${CYAN}curl -sL ${URL_LATEST_SCRIPT} -o xizi.sh && chmod +x xizi.sh${NC}\n"
+        echo -e "${CYAN}curl -sL ${URL_LATEST_SCRIPT} && chmod +x xizi.sh && ./xizi.sh${NC}\n"
 
         sleep 3
         exit 0  # 卸载完成后退出脚本
